@@ -42,13 +42,15 @@ gulp.task('watch', function() {
 
 
 // WEB SERVER
-gulp.task('serve', connect.server({
-  root: [__dirname],
-  port: 8000,
-  open: {
-    browser: 'Google Chrome'
-  }
-}));
+gulp.task('serve', function(){
+  connect.server({
+    root: [__dirname],
+    port: 8000,
+    open: {
+      browser: 'Google Chrome'
+    }
+  });
+});
 
 
 
