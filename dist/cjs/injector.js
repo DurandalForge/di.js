@@ -18,10 +18,11 @@ var $__0 = ($__annotations__ = require("./annotations"), $__annotations__ && $__
 var $__1 = ($__util__ = require("./util"), $__util__ && $__util__.__esModule && $__util__ || {default: $__util__}),
     isFunction = $__1.isFunction,
     toString = $__1.toString;
-var profileInjector = ($__profiler__ = require("./profiler"), $__profiler__ && $__profiler__.__esModule && $__profiler__ || {default: $__profiler__}).profileInjector;
+var getUniqueId = ($__profiler__ = require("./profiler"), $__profiler__ && $__profiler__.__esModule && $__profiler__ || {default: $__profiler__}).getUniqueId;
 var createProviderFromFnOrClass = ($__providers__ = require("./providers"), $__providers__ && $__providers__.__esModule && $__providers__ || {default: $__providers__}).createProviderFromFnOrClass;
-function constructResolvingMessage(resolving, token) {
-  if (arguments.length > 1) {
+function constructResolvingMessage(resolving) {
+  var token = arguments[1] !== (void 0) ? arguments[1] : null;
+  if (token) {
     resolving.push(token);
   }
   if (resolving.length > 1) {
@@ -33,27 +34,26 @@ var Injector = function Injector() {
   var modules = arguments[0] !== (void 0) ? arguments[0] : [];
   var parentInjector = arguments[1] !== (void 0) ? arguments[1] : null;
   var providers = arguments[2] !== (void 0) ? arguments[2] : new Map();
-  var scopes = arguments[3] !== (void 0) ? arguments[3] : [];
-  this._cache = new Map();
-  this._providers = providers;
-  this._parent = parentInjector;
-  this._scopes = scopes;
+  this.cache = new Map();
+  this.providers = providers;
+  this.parent = parentInjector;
+  this.id = getUniqueId();
   this._loadModules(modules);
-  profileInjector(this, $Injector);
 };
 var $Injector = Injector;
 ($traceurRuntime.createClass)(Injector, {
   _collectProvidersWithAnnotation: function(annotationClass, collectedProviders) {
-    this._providers.forEach((function(provider, token) {
+    this.providers.forEach((function(provider, token) {
       if (!collectedProviders.has(token) && hasAnnotation(provider.provider, annotationClass)) {
         collectedProviders.set(token, provider);
       }
     }));
-    if (this._parent) {
-      this._parent._collectProvidersWithAnnotation(annotationClass, collectedProviders);
+    if (this.parent) {
+      this.parent._collectProvidersWithAnnotation(annotationClass, collectedProviders);
     }
   },
   _loadModules: function(modules) {
+    var $__4 = this;
     for (var $__6 = modules[$traceurRuntime.toProperty(Symbol.iterator)](),
         $__7; !($__7 = $__6.next()).done; ) {
       var module = $__7.value;
@@ -62,41 +62,28 @@ var $Injector = Injector;
           this._loadFnOrClass(module);
           continue;
         }
-        throw new Error('Invalid module!');
+        Object.keys(module).forEach((function(key) {
+          if (isFunction(module[key])) {
+            $__4._loadFnOrClass(module[key], key);
+          }
+        }));
       }
     }
   },
-  _loadFnOrClass: function(fnOrClass) {
+  _loadFnOrClass: function(fnOrClass, key) {
     var annotations = readAnnotations(fnOrClass);
-    var token = annotations.provide.token || fnOrClass;
+    var token = annotations.provide.token || key || fnOrClass;
     var provider = createProviderFromFnOrClass(fnOrClass, annotations);
-    this._providers.set(token, provider);
+    this.providers.set(token, provider);
   },
   _hasProviderFor: function(token) {
-    if (this._providers.has(token)) {
+    if (this.providers.has(token)) {
       return true;
     }
-    if (this._parent) {
-      return this._parent._hasProviderFor(token);
+    if (this.parent) {
+      return this.parent._hasProviderFor(token);
     }
     return false;
-  },
-  _instantiateDefaultProvider: function(provider, token, resolving, wantPromise, wantLazy) {
-    if (!this._parent) {
-      this._providers.set(token, provider);
-      return this.get(token, resolving, wantPromise, wantLazy);
-    }
-    for (var $__6 = this._scopes[$traceurRuntime.toProperty(Symbol.iterator)](),
-        $__7; !($__7 = $__6.next()).done; ) {
-      var ScopeClass = $__7.value;
-      {
-        if (hasAnnotation(provider.provider, ScopeClass)) {
-          this._providers.set(token, provider);
-          return this.get(token, resolving, wantPromise, wantLazy);
-        }
-      }
-    }
-    return this._parent._instantiateDefaultProvider(provider, token, resolving, wantPromise, wantLazy);
   },
   get: function(token) {
     var resolving = arguments[1] !== (void 0) ? arguments[1] : [];
@@ -104,13 +91,8 @@ var $Injector = Injector;
     var wantLazy = arguments[3] !== (void 0) ? arguments[3] : false;
     var $__4 = this;
     var resolvingMsg = '';
-    var provider;
     var instance;
     var injector = this;
-    if (token === null || token === undefined) {
-      resolvingMsg = constructResolvingMessage(resolving, token);
-      throw new Error(("Invalid token \"" + token + "\" requested!" + resolvingMsg));
-    }
     if (token === $Injector) {
       if (wantPromise) {
         return Promise.resolve(this);
@@ -137,29 +119,31 @@ var $Injector = Injector;
         return lazyInjector.get(token, resolving, wantPromise, false);
       };
     }
-    if (this._cache.has(token)) {
-      instance = this._cache.get(token);
-      provider = this._providers.get(token);
-      if (provider.isPromise && !wantPromise) {
-        resolvingMsg = constructResolvingMessage(resolving, token);
-        throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
-      }
-      if (!provider.isPromise && wantPromise) {
-        return Promise.resolve(instance);
+    if (this.cache.has(token)) {
+      instance = this.cache.get(token);
+      if (this.providers.get(token).isPromise) {
+        if (!wantPromise) {
+          resolvingMsg = constructResolvingMessage(resolving, token);
+          throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
+        }
+      } else {
+        if (wantPromise) {
+          return Promise.resolve(instance);
+        }
       }
       return instance;
     }
-    provider = this._providers.get(token);
+    var provider = this.providers.get(token);
     if (!provider && isFunction(token) && !this._hasProviderFor(token)) {
       provider = createProviderFromFnOrClass(token, readAnnotations(token));
-      return this._instantiateDefaultProvider(provider, token, resolving, wantPromise, wantLazy);
+      this.providers.set(token, provider);
     }
     if (!provider) {
-      if (!this._parent) {
+      if (!this.parent) {
         resolvingMsg = constructResolvingMessage(resolving, token);
         throw new Error(("No provider for " + toString(token) + "!" + resolvingMsg));
       }
-      return this._parent.get(token, resolving, wantPromise, wantLazy);
+      return this.parent.get(token, resolving, wantPromise, wantLazy);
     }
     if (resolving.indexOf(token) !== -1) {
       resolvingMsg = constructResolvingMessage(resolving, token);
@@ -188,7 +172,7 @@ var $Injector = Injector;
           throw e;
         }
         if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
-          injector._cache.set(token, instance);
+          injector.cache.set(token, instance);
         }
         return instance;
       });
@@ -202,7 +186,7 @@ var $Injector = Injector;
       throw e;
     }
     if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
-      this._cache.set(token, instance);
+      this.cache.set(token, instance);
     }
     if (!wantPromise && provider.isPromise) {
       resolvingMsg = constructResolvingMessage(resolving);
@@ -221,7 +205,6 @@ var $Injector = Injector;
     var modules = arguments[0] !== (void 0) ? arguments[0] : [];
     var forceNewInstancesOf = arguments[1] !== (void 0) ? arguments[1] : [];
     var forcedProviders = new Map();
-    forceNewInstancesOf.push(TransientScopeAnnotation);
     for (var $__6 = forceNewInstancesOf[$traceurRuntime.toProperty(Symbol.iterator)](),
         $__7; !($__7 = $__6.next()).done; ) {
       var annotation = $__7.value;
@@ -229,7 +212,22 @@ var $Injector = Injector;
         this._collectProvidersWithAnnotation(annotation, forcedProviders);
       }
     }
-    return new $Injector(modules, this, forcedProviders, forceNewInstancesOf);
+    return new $Injector(modules, this, forcedProviders);
+  },
+  dump: function() {
+    var $__4 = this;
+    var serialized = {
+      id: this.id,
+      parent_id: this.parent ? this.parent.id : null,
+      providers: {}
+    };
+    Object.keys(this.providers).forEach((function(token) {
+      serialized.providers[token] = {
+        name: token,
+        dependencies: $__4.providers[token].params
+      };
+    }));
+    return serialized;
   }
 }, {});
 ;

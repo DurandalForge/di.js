@@ -17,10 +17,11 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
   var $__3 = $__2,
       isFunction = $__3.isFunction,
       toString = $__3.toString;
-  var profileInjector = $__4.profileInjector;
+  var getUniqueId = $__4.getUniqueId;
   var createProviderFromFnOrClass = $__6.createProviderFromFnOrClass;
-  function constructResolvingMessage(resolving, token) {
-    if (arguments.length > 1) {
+  function constructResolvingMessage(resolving) {
+    var token = arguments[1] !== (void 0) ? arguments[1] : null;
+    if (token) {
       resolving.push(token);
     }
     if (resolving.length > 1) {
@@ -32,27 +33,26 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
     var modules = arguments[0] !== (void 0) ? arguments[0] : [];
     var parentInjector = arguments[1] !== (void 0) ? arguments[1] : null;
     var providers = arguments[2] !== (void 0) ? arguments[2] : new Map();
-    var scopes = arguments[3] !== (void 0) ? arguments[3] : [];
-    this._cache = new Map();
-    this._providers = providers;
-    this._parent = parentInjector;
-    this._scopes = scopes;
+    this.cache = new Map();
+    this.providers = providers;
+    this.parent = parentInjector;
+    this.id = getUniqueId();
     this._loadModules(modules);
-    profileInjector(this, $Injector);
   };
   var $Injector = Injector;
   ($traceurRuntime.createClass)(Injector, {
     _collectProvidersWithAnnotation: function(annotationClass, collectedProviders) {
-      this._providers.forEach((function(provider, token) {
+      this.providers.forEach((function(provider, token) {
         if (!collectedProviders.has(token) && hasAnnotation(provider.provider, annotationClass)) {
           collectedProviders.set(token, provider);
         }
       }));
-      if (this._parent) {
-        this._parent._collectProvidersWithAnnotation(annotationClass, collectedProviders);
+      if (this.parent) {
+        this.parent._collectProvidersWithAnnotation(annotationClass, collectedProviders);
       }
     },
     _loadModules: function(modules) {
+      var $__8 = this;
       for (var $__10 = modules[$traceurRuntime.toProperty(Symbol.iterator)](),
           $__11; !($__11 = $__10.next()).done; ) {
         var module = $__11.value;
@@ -61,41 +61,28 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
             this._loadFnOrClass(module);
             continue;
           }
-          throw new Error('Invalid module!');
+          Object.keys(module).forEach((function(key) {
+            if (isFunction(module[key])) {
+              $__8._loadFnOrClass(module[key], key);
+            }
+          }));
         }
       }
     },
-    _loadFnOrClass: function(fnOrClass) {
+    _loadFnOrClass: function(fnOrClass, key) {
       var annotations = readAnnotations(fnOrClass);
-      var token = annotations.provide.token || fnOrClass;
+      var token = annotations.provide.token || key || fnOrClass;
       var provider = createProviderFromFnOrClass(fnOrClass, annotations);
-      this._providers.set(token, provider);
+      this.providers.set(token, provider);
     },
     _hasProviderFor: function(token) {
-      if (this._providers.has(token)) {
+      if (this.providers.has(token)) {
         return true;
       }
-      if (this._parent) {
-        return this._parent._hasProviderFor(token);
+      if (this.parent) {
+        return this.parent._hasProviderFor(token);
       }
       return false;
-    },
-    _instantiateDefaultProvider: function(provider, token, resolving, wantPromise, wantLazy) {
-      if (!this._parent) {
-        this._providers.set(token, provider);
-        return this.get(token, resolving, wantPromise, wantLazy);
-      }
-      for (var $__10 = this._scopes[$traceurRuntime.toProperty(Symbol.iterator)](),
-          $__11; !($__11 = $__10.next()).done; ) {
-        var ScopeClass = $__11.value;
-        {
-          if (hasAnnotation(provider.provider, ScopeClass)) {
-            this._providers.set(token, provider);
-            return this.get(token, resolving, wantPromise, wantLazy);
-          }
-        }
-      }
-      return this._parent._instantiateDefaultProvider(provider, token, resolving, wantPromise, wantLazy);
     },
     get: function(token) {
       var resolving = arguments[1] !== (void 0) ? arguments[1] : [];
@@ -103,13 +90,8 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
       var wantLazy = arguments[3] !== (void 0) ? arguments[3] : false;
       var $__8 = this;
       var resolvingMsg = '';
-      var provider;
       var instance;
       var injector = this;
-      if (token === null || token === undefined) {
-        resolvingMsg = constructResolvingMessage(resolving, token);
-        throw new Error(("Invalid token \"" + token + "\" requested!" + resolvingMsg));
-      }
       if (token === $Injector) {
         if (wantPromise) {
           return Promise.resolve(this);
@@ -136,29 +118,31 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
           return lazyInjector.get(token, resolving, wantPromise, false);
         };
       }
-      if (this._cache.has(token)) {
-        instance = this._cache.get(token);
-        provider = this._providers.get(token);
-        if (provider.isPromise && !wantPromise) {
-          resolvingMsg = constructResolvingMessage(resolving, token);
-          throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
-        }
-        if (!provider.isPromise && wantPromise) {
-          return Promise.resolve(instance);
+      if (this.cache.has(token)) {
+        instance = this.cache.get(token);
+        if (this.providers.get(token).isPromise) {
+          if (!wantPromise) {
+            resolvingMsg = constructResolvingMessage(resolving, token);
+            throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
+          }
+        } else {
+          if (wantPromise) {
+            return Promise.resolve(instance);
+          }
         }
         return instance;
       }
-      provider = this._providers.get(token);
+      var provider = this.providers.get(token);
       if (!provider && isFunction(token) && !this._hasProviderFor(token)) {
         provider = createProviderFromFnOrClass(token, readAnnotations(token));
-        return this._instantiateDefaultProvider(provider, token, resolving, wantPromise, wantLazy);
+        this.providers.set(token, provider);
       }
       if (!provider) {
-        if (!this._parent) {
+        if (!this.parent) {
           resolvingMsg = constructResolvingMessage(resolving, token);
           throw new Error(("No provider for " + toString(token) + "!" + resolvingMsg));
         }
-        return this._parent.get(token, resolving, wantPromise, wantLazy);
+        return this.parent.get(token, resolving, wantPromise, wantLazy);
       }
       if (resolving.indexOf(token) !== -1) {
         resolvingMsg = constructResolvingMessage(resolving, token);
@@ -187,7 +171,7 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
             throw e;
           }
           if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
-            injector._cache.set(token, instance);
+            injector.cache.set(token, instance);
           }
           return instance;
         });
@@ -201,7 +185,7 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
         throw e;
       }
       if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
-        this._cache.set(token, instance);
+        this.cache.set(token, instance);
       }
       if (!wantPromise && provider.isPromise) {
         resolvingMsg = constructResolvingMessage(resolving);
@@ -220,7 +204,6 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
       var modules = arguments[0] !== (void 0) ? arguments[0] : [];
       var forceNewInstancesOf = arguments[1] !== (void 0) ? arguments[1] : [];
       var forcedProviders = new Map();
-      forceNewInstancesOf.push(TransientScopeAnnotation);
       for (var $__10 = forceNewInstancesOf[$traceurRuntime.toProperty(Symbol.iterator)](),
           $__11; !($__11 = $__10.next()).done; ) {
         var annotation = $__11.value;
@@ -228,7 +211,22 @@ define(['./annotations', './util', './profiler', './providers'], function($__0,$
           this._collectProvidersWithAnnotation(annotation, forcedProviders);
         }
       }
-      return new $Injector(modules, this, forcedProviders, forceNewInstancesOf);
+      return new $Injector(modules, this, forcedProviders);
+    },
+    dump: function() {
+      var $__8 = this;
+      var serialized = {
+        id: this.id,
+        parent_id: this.parent ? this.parent.id : null,
+        providers: {}
+      };
+      Object.keys(this.providers).forEach((function(token) {
+        serialized.providers[token] = {
+          name: token,
+          dependencies: $__8.providers[token].params
+        };
+      }));
+      return serialized;
     }
   }, {});
   ;

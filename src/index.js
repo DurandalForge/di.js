@@ -4,7 +4,6 @@ export {Injector} from './injector';
 export {
   annotate,
   Inject,
-  InjectLazy,
   InjectPromise,
   Provide,
   ProvidePromise,

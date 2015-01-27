@@ -108,12 +108,12 @@ function readAnnotations(fn) {
       var annotation = $__3.value;
       {
         if (annotation instanceof Inject) {
-          annotation.tokens.forEach((function(token) {
-            collectedAnnotations.params.push({
+          collectedAnnotations.params = annotation.tokens.map((function(token) {
+            return {
               token: token,
               isPromise: annotation.isPromise,
               isLazy: annotation.isLazy
-            });
+            };
           }));
         }
         if (annotation instanceof Provide) {

@@ -9,9 +9,6 @@ Object.defineProperties(exports, {
   Inject: {get: function() {
       return $__annotations__.Inject;
     }},
-  InjectLazy: {get: function() {
-      return $__annotations__.InjectLazy;
-    }},
   InjectPromise: {get: function() {
       return $__annotations__.InjectPromise;
     }},

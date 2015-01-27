@@ -17,9 +17,9 @@ define(['./annotations', './util'], function($__0,$__2) {
     this.provider = clazz;
     this.isPromise = isPromise;
     this.params = [];
-    this._constructors = [];
+    this.constructors = [];
     this._flattenParams(clazz, params);
-    this._constructors.unshift([clazz, 0, this.params.length - 1]);
+    this.constructors.unshift([clazz, 0, this.params.length - 1]);
   };
   ($traceurRuntime.createClass)(ClassProvider, {
     _flattenParams: function(constructor, params) {
@@ -35,7 +35,7 @@ define(['./annotations', './util'], function($__0,$__2) {
               throw new Error((toString(constructor) + " does not have a parent constructor. Only classes with a parent can ask for SuperConstructor!"));
             }
             constructorInfo = [SuperConstructor, this.params.length];
-            this._constructors.push(constructorInfo);
+            this.constructors.push(constructorInfo);
             this._flattenParams(SuperConstructor, readAnnotations(SuperConstructor).params);
             constructorInfo.push(this.params.length - 1);
           } else {
@@ -45,8 +45,8 @@ define(['./annotations', './util'], function($__0,$__2) {
       }
     },
     _createConstructor: function(currentConstructorIdx, context, allArguments) {
-      var constructorInfo = this._constructors[currentConstructorIdx];
-      var nextConstructorInfo = this._constructors[currentConstructorIdx + 1];
+      var constructorInfo = this.constructors[currentConstructorIdx];
+      var nextConstructorInfo = this.constructors[currentConstructorIdx + 1];
       var argsForCurrentConstructor;
       if (nextConstructorInfo) {
         argsForCurrentConstructor = allArguments.slice(constructorInfo[1], nextConstructorInfo[1]).concat([this._createConstructor(currentConstructorIdx + 1, context, allArguments)]).concat(allArguments.slice(nextConstructorInfo[2] + 1, constructorInfo[2] + 1));

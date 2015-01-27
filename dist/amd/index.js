@@ -16,9 +16,6 @@ define(['./injector', './annotations'], function($__0,$__1) {
     get Inject() {
       return $__annotations__.Inject;
     },
-    get InjectLazy() {
-      return $__annotations__.InjectLazy;
-    },
     get InjectPromise() {
       return $__annotations__.InjectPromise;
     },

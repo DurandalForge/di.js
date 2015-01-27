@@ -36,9 +36,6 @@ function toString(token) {
   if (typeof token === 'string') {
     return token;
   }
-  if (token === undefined || token === null) {
-    return '' + token;
-  }
   if (token.name) {
     return token.name;
   }
