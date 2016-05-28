@@ -13,7 +13,7 @@ define([], function() {
     return typeof value === 'function';
   }
   function isObject(value) {
-    return typeof value === 'object';
+    return (typeof value === 'undefined' ? 'undefined' : $traceurRuntime.typeof(value)) === 'object';
   }
   function toString(token) {
     if (typeof token === 'string') {
@@ -24,7 +24,6 @@ define([], function() {
     }
     return token.toString();
   }
-  ;
   return {
     get isUpperCase() {
       return isUpperCase;

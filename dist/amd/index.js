@@ -1,4 +1,4 @@
-define(['./injector', './annotations'], function($__0,$__1) {
+define(["./injector", "./annotations"], function($__0, $__1) {
   "use strict";
   if (!$__0 || !$__0.__esModule)
     $__0 = {default: $__0};

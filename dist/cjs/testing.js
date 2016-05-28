@@ -1,22 +1,13 @@
 "use strict";
-Object.defineProperties(exports, {
-  use: {get: function() {
-      return use;
-    }},
-  inject: {get: function() {
-      return inject;
-    }},
-  __esModule: {value: true}
-});
 var $__injector__,
     $__annotations__,
     $__util__,
     $__providers__;
 var Injector = ($__injector__ = require("./injector"), $__injector__ && $__injector__.__esModule && $__injector__ || {default: $__injector__}).Injector;
-var $__1 = ($__annotations__ = require("./annotations"), $__annotations__ && $__annotations__.__esModule && $__annotations__ || {default: $__annotations__}),
-    Inject = $__1.Inject,
-    annotate = $__1.annotate,
-    readAnnotations = $__1.readAnnotations;
+var $__3 = ($__annotations__ = require("./annotations"), $__annotations__ && $__annotations__.__esModule && $__annotations__ || {default: $__annotations__}),
+    Inject = $__3.Inject,
+    annotate = $__3.annotate,
+    readAnnotations = $__3.readAnnotations;
 var isFunction = ($__util__ = require("./util"), $__util__ && $__util__.__esModule && $__util__ || {default: $__util__}).isFunction;
 var createProviderFromFnOrClass = ($__providers__ = require("./providers"), $__providers__ && $__providers__.__esModule && $__providers__ || {default: $__providers__}).createProviderFromFnOrClass;
 var currentSpec = null;
@@ -57,8 +48,8 @@ function use(mock) {
 }
 function inject() {
   for (var params = [],
-      $__4 = 0; $__4 < arguments.length; $__4++)
-    params[$__4] = arguments[$__4];
+      $__1 = 0; $__1 < arguments.length; $__1++)
+    params[$__1] = arguments[$__1];
   var behavior = params.pop();
   annotate(behavior, new (Function.prototype.bind.apply(Inject, $traceurRuntime.spread([null], params)))());
   var run = function() {
@@ -92,4 +83,18 @@ function inject() {
   };
   return isRunning() ? run() : run;
 }
-;
+Object.defineProperties(module.exports, {
+  use: {
+    get: function() {
+      return use;
+    },
+    enumerable: true
+  },
+  inject: {
+    get: function() {
+      return inject;
+    },
+    enumerable: true
+  },
+  __esModule: {value: true}
+});

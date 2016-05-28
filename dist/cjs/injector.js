@@ -1,23 +1,17 @@
 "use strict";
-Object.defineProperties(exports, {
-  Injector: {get: function() {
-      return Injector;
-    }},
-  __esModule: {value: true}
-});
 var $__annotations__,
     $__util__,
     $__profiler__,
     $__providers__;
-var $__0 = ($__annotations__ = require("./annotations"), $__annotations__ && $__annotations__.__esModule && $__annotations__ || {default: $__annotations__}),
-    annotate = $__0.annotate,
-    readAnnotations = $__0.readAnnotations,
-    hasAnnotation = $__0.hasAnnotation,
-    ProvideAnnotation = $__0.Provide,
-    TransientScopeAnnotation = $__0.TransientScope;
-var $__1 = ($__util__ = require("./util"), $__util__ && $__util__.__esModule && $__util__ || {default: $__util__}),
-    isFunction = $__1.isFunction,
-    toString = $__1.toString;
+var $__11 = ($__annotations__ = require("./annotations"), $__annotations__ && $__annotations__.__esModule && $__annotations__ || {default: $__annotations__}),
+    annotate = $__11.annotate,
+    readAnnotations = $__11.readAnnotations,
+    hasAnnotation = $__11.hasAnnotation,
+    ProvideAnnotation = $__11.Provide,
+    TransientScopeAnnotation = $__11.TransientScope;
+var $__12 = ($__util__ = require("./util"), $__util__ && $__util__.__esModule && $__util__ || {default: $__util__}),
+    isFunction = $__12.isFunction,
+    toString = $__12.toString;
 var getUniqueId = ($__profiler__ = require("./profiler"), $__profiler__ && $__profiler__.__esModule && $__profiler__ || {default: $__profiler__}).getUniqueId;
 var createProviderFromFnOrClass = ($__providers__ = require("./providers"), $__providers__ && $__providers__.__esModule && $__providers__ || {default: $__providers__}).createProviderFromFnOrClass;
 function constructResolvingMessage(resolving) {
@@ -30,204 +24,249 @@ function constructResolvingMessage(resolving) {
   }
   return '';
 }
-var Injector = function Injector() {
-  var modules = arguments[0] !== (void 0) ? arguments[0] : [];
-  var parentInjector = arguments[1] !== (void 0) ? arguments[1] : null;
-  var providers = arguments[2] !== (void 0) ? arguments[2] : new Map();
-  this.cache = new Map();
-  this.providers = providers;
-  this.parent = parentInjector;
-  this.id = getUniqueId();
-  this._loadModules(modules);
-};
-var $Injector = Injector;
-($traceurRuntime.createClass)(Injector, {
-  _collectProvidersWithAnnotation: function(annotationClass, collectedProviders) {
-    this.providers.forEach((function(provider, token) {
-      if (!collectedProviders.has(token) && hasAnnotation(provider.provider, annotationClass)) {
-        collectedProviders.set(token, provider);
-      }
-    }));
-    if (this.parent) {
-      this.parent._collectProvidersWithAnnotation(annotationClass, collectedProviders);
-    }
-  },
-  _loadModules: function(modules) {
-    var $__4 = this;
-    for (var $__6 = modules[$traceurRuntime.toProperty(Symbol.iterator)](),
-        $__7; !($__7 = $__6.next()).done; ) {
-      var module = $__7.value;
-      {
-        if (isFunction(module)) {
-          this._loadFnOrClass(module);
-          continue;
+var Injector = function() {
+  function Injector() {
+    var modules = arguments[0] !== (void 0) ? arguments[0] : [];
+    var parentInjector = arguments[1] !== (void 0) ? arguments[1] : null;
+    var providers = arguments[2] !== (void 0) ? arguments[2] : new Map();
+    this.cache = new Map();
+    this.providers = providers;
+    this.parent = parentInjector;
+    this.id = getUniqueId();
+    this._loadModules(modules);
+  }
+  return ($traceurRuntime.createClass)(Injector, {
+    _collectProvidersWithAnnotation: function(annotationClass, collectedProviders) {
+      this.providers.forEach(function(provider, token) {
+        if (!collectedProviders.has(token) && hasAnnotation(provider.provider, annotationClass)) {
+          collectedProviders.set(token, provider);
         }
-        Object.keys(module).forEach((function(key) {
-          if (isFunction(module[key])) {
-            $__4._loadFnOrClass(module[key], key);
+      });
+      if (this.parent) {
+        this.parent._collectProvidersWithAnnotation(annotationClass, collectedProviders);
+      }
+    },
+    _loadModules: function(modules) {
+      var $__3 = this;
+      var $__7 = true;
+      var $__8 = false;
+      var $__9 = undefined;
+      try {
+        for (var $__5 = void 0,
+            $__4 = (modules)[Symbol.iterator](); !($__7 = ($__5 = $__4.next()).done); $__7 = true) {
+          var module = $__5.value;
+          {
+            if (isFunction(module)) {
+              this._loadFnOrClass(module);
+              continue;
+            }
+            Object.keys(module).forEach(function(key) {
+              if (isFunction(module[key])) {
+                $__3._loadFnOrClass(module[key], key);
+              }
+            });
           }
-        }));
-      }
-    }
-  },
-  _loadFnOrClass: function(fnOrClass, key) {
-    var annotations = readAnnotations(fnOrClass);
-    var token = annotations.provide.token || key || fnOrClass;
-    var provider = createProviderFromFnOrClass(fnOrClass, annotations);
-    this.providers.set(token, provider);
-  },
-  _hasProviderFor: function(token) {
-    if (this.providers.has(token)) {
-      return true;
-    }
-    if (this.parent) {
-      return this.parent._hasProviderFor(token);
-    }
-    return false;
-  },
-  get: function(token) {
-    var resolving = arguments[1] !== (void 0) ? arguments[1] : [];
-    var wantPromise = arguments[2] !== (void 0) ? arguments[2] : false;
-    var wantLazy = arguments[3] !== (void 0) ? arguments[3] : false;
-    var $__4 = this;
-    var resolvingMsg = '';
-    var instance;
-    var injector = this;
-    if (token === $Injector) {
-      if (wantPromise) {
-        return Promise.resolve(this);
-      }
-      return this;
-    }
-    if (wantLazy) {
-      return function createLazyInstance() {
-        var lazyInjector = injector;
-        if (arguments.length) {
-          var locals = [];
-          var args = arguments;
-          for (var i = 0; i < args.length; i += 2) {
-            locals.push((function(ii) {
-              var fn = function createLocalInstance() {
-                return args[ii + 1];
-              };
-              annotate(fn, new ProvideAnnotation(args[ii]));
-              return fn;
-            })(i));
-          }
-          lazyInjector = injector.createChild(locals);
         }
-        return lazyInjector.get(token, resolving, wantPromise, false);
-      };
-    }
-    if (this.cache.has(token)) {
-      instance = this.cache.get(token);
-      if (this.providers.get(token).isPromise) {
-        if (!wantPromise) {
-          resolvingMsg = constructResolvingMessage(resolving, token);
-          throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
-        }
-      } else {
-        if (wantPromise) {
-          return Promise.resolve(instance);
-        }
-      }
-      return instance;
-    }
-    var provider = this.providers.get(token);
-    if (!provider && isFunction(token) && !this._hasProviderFor(token)) {
-      provider = createProviderFromFnOrClass(token, readAnnotations(token));
-      this.providers.set(token, provider);
-    }
-    if (!provider) {
-      if (!this.parent) {
-        resolvingMsg = constructResolvingMessage(resolving, token);
-        throw new Error(("No provider for " + toString(token) + "!" + resolvingMsg));
-      }
-      return this.parent.get(token, resolving, wantPromise, wantLazy);
-    }
-    if (resolving.indexOf(token) !== -1) {
-      resolvingMsg = constructResolvingMessage(resolving, token);
-      throw new Error(("Cannot instantiate cyclic dependency!" + resolvingMsg));
-    }
-    resolving.push(token);
-    var delayingInstantiation = wantPromise && provider.params.some((function(param) {
-      return !param.isPromise;
-    }));
-    var args = provider.params.map((function(param) {
-      if (delayingInstantiation) {
-        return $__4.get(param.token, resolving, true, param.isLazy);
-      }
-      return $__4.get(param.token, resolving, param.isPromise, param.isLazy);
-    }));
-    if (delayingInstantiation) {
-      var delayedResolving = resolving.slice();
-      resolving.pop();
-      return Promise.all(args).then(function(args) {
+      } catch ($__10) {
+        $__8 = true;
+        $__9 = $__10;
+      } finally {
         try {
-          instance = provider.create(args);
-        } catch (e) {
-          resolvingMsg = constructResolvingMessage(delayedResolving);
-          var originalMsg = 'ORIGINAL ERROR: ' + e.message;
-          e.message = ("Error during instantiation of " + toString(token) + "!" + resolvingMsg + "\n" + originalMsg);
-          throw e;
+          if (!$__7 && $__4.return != null) {
+            $__4.return();
+          }
+        } finally {
+          if ($__8) {
+            throw $__9;
+          }
         }
-        if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
-          injector.cache.set(token, instance);
+      }
+    },
+    _loadFnOrClass: function(fnOrClass, key) {
+      var annotations = readAnnotations(fnOrClass);
+      var token = annotations.provide.token || key || fnOrClass;
+      var provider = createProviderFromFnOrClass(fnOrClass, annotations);
+      this.providers.set(token, provider);
+    },
+    _hasProviderFor: function(token) {
+      if (this.providers.has(token)) {
+        return true;
+      }
+      if (this.parent) {
+        return this.parent._hasProviderFor(token);
+      }
+      return false;
+    },
+    get: function(token) {
+      var resolving = arguments[1] !== (void 0) ? arguments[1] : [];
+      var wantPromise = arguments[2] !== (void 0) ? arguments[2] : false;
+      var wantLazy = arguments[3] !== (void 0) ? arguments[3] : false;
+      var $__3 = this;
+      var resolvingMsg = '';
+      var instance;
+      var injector = this;
+      if (token === Injector) {
+        if (wantPromise) {
+          return Promise.resolve(this);
+        }
+        return this;
+      }
+      if (wantLazy) {
+        return function createLazyInstance() {
+          var lazyInjector = injector;
+          if (arguments.length) {
+            var locals = [];
+            var args = arguments;
+            for (var i = 0; i < args.length; i += 2) {
+              locals.push((function(ii) {
+                var fn = function createLocalInstance() {
+                  return args[ii + 1];
+                };
+                annotate(fn, new ProvideAnnotation(args[ii]));
+                return fn;
+              })(i));
+            }
+            lazyInjector = injector.createChild(locals);
+          }
+          return lazyInjector.get(token, resolving, wantPromise, false);
+        };
+      }
+      if (this.cache.has(token)) {
+        instance = this.cache.get(token);
+        if (this.providers.get(token).isPromise) {
+          if (!wantPromise) {
+            resolvingMsg = constructResolvingMessage(resolving, token);
+            throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
+          }
+        } else {
+          if (wantPromise) {
+            return Promise.resolve(instance);
+          }
         }
         return instance;
-      });
-    }
-    try {
-      instance = provider.create(args);
-    } catch (e) {
-      resolvingMsg = constructResolvingMessage(resolving);
-      var originalMsg = 'ORIGINAL ERROR: ' + e.message;
-      e.message = ("Error during instantiation of " + toString(token) + "!" + resolvingMsg + "\n" + originalMsg);
-      throw e;
-    }
-    if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
-      this.cache.set(token, instance);
-    }
-    if (!wantPromise && provider.isPromise) {
-      resolvingMsg = constructResolvingMessage(resolving);
-      throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
-    }
-    if (wantPromise && !provider.isPromise) {
-      instance = Promise.resolve(instance);
-    }
-    resolving.pop();
-    return instance;
-  },
-  getPromise: function(token) {
-    return this.get(token, [], true);
-  },
-  createChild: function() {
-    var modules = arguments[0] !== (void 0) ? arguments[0] : [];
-    var forceNewInstancesOf = arguments[1] !== (void 0) ? arguments[1] : [];
-    var forcedProviders = new Map();
-    for (var $__6 = forceNewInstancesOf[$traceurRuntime.toProperty(Symbol.iterator)](),
-        $__7; !($__7 = $__6.next()).done; ) {
-      var annotation = $__7.value;
-      {
-        this._collectProvidersWithAnnotation(annotation, forcedProviders);
       }
-    }
-    return new $Injector(modules, this, forcedProviders);
-  },
-  dump: function() {
-    var $__4 = this;
-    var serialized = {
-      id: this.id,
-      parent_id: this.parent ? this.parent.id : null,
-      providers: {}
-    };
-    Object.keys(this.providers).forEach((function(token) {
-      serialized.providers[token] = {
-        name: token,
-        dependencies: $__4.providers[token].params
+      var provider = this.providers.get(token);
+      if (!provider && isFunction(token) && !this._hasProviderFor(token)) {
+        provider = createProviderFromFnOrClass(token, readAnnotations(token));
+        this.providers.set(token, provider);
+      }
+      if (!provider) {
+        if (!this.parent) {
+          resolvingMsg = constructResolvingMessage(resolving, token);
+          throw new Error(("No provider for " + toString(token) + "!" + resolvingMsg));
+        }
+        return this.parent.get(token, resolving, wantPromise, wantLazy);
+      }
+      if (resolving.indexOf(token) !== -1) {
+        resolvingMsg = constructResolvingMessage(resolving, token);
+        throw new Error(("Cannot instantiate cyclic dependency!" + resolvingMsg));
+      }
+      resolving.push(token);
+      var delayingInstantiation = wantPromise && provider.params.some(function(param) {
+        return !param.isPromise;
+      });
+      var args = provider.params.map(function(param) {
+        if (delayingInstantiation) {
+          return $__3.get(param.token, resolving, true, param.isLazy);
+        }
+        return $__3.get(param.token, resolving, param.isPromise, param.isLazy);
+      });
+      if (delayingInstantiation) {
+        var delayedResolving = resolving.slice();
+        resolving.pop();
+        return Promise.all(args).then(function(args) {
+          try {
+            instance = provider.create(args);
+          } catch (e) {
+            resolvingMsg = constructResolvingMessage(delayedResolving);
+            var originalMsg = 'ORIGINAL ERROR: ' + e.message;
+            e.message = ("Error during instantiation of " + toString(token) + "!" + resolvingMsg + "\n" + originalMsg);
+            throw e;
+          }
+          if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
+            injector.cache.set(token, instance);
+          }
+          return instance;
+        });
+      }
+      try {
+        instance = provider.create(args);
+      } catch (e) {
+        resolvingMsg = constructResolvingMessage(resolving);
+        var originalMsg = 'ORIGINAL ERROR: ' + e.message;
+        e.message = ("Error during instantiation of " + toString(token) + "!" + resolvingMsg + "\n" + originalMsg);
+        throw e;
+      }
+      if (!hasAnnotation(provider.provider, TransientScopeAnnotation)) {
+        this.cache.set(token, instance);
+      }
+      if (!wantPromise && provider.isPromise) {
+        resolvingMsg = constructResolvingMessage(resolving);
+        throw new Error(("Cannot instantiate " + toString(token) + " synchronously. It is provided as a promise!" + resolvingMsg));
+      }
+      if (wantPromise && !provider.isPromise) {
+        instance = Promise.resolve(instance);
+      }
+      resolving.pop();
+      return instance;
+    },
+    getPromise: function(token) {
+      return this.get(token, [], true);
+    },
+    createChild: function() {
+      var modules = arguments[0] !== (void 0) ? arguments[0] : [];
+      var forceNewInstancesOf = arguments[1] !== (void 0) ? arguments[1] : [];
+      var forcedProviders = new Map();
+      var $__7 = true;
+      var $__8 = false;
+      var $__9 = undefined;
+      try {
+        for (var $__5 = void 0,
+            $__4 = (forceNewInstancesOf)[Symbol.iterator](); !($__7 = ($__5 = $__4.next()).done); $__7 = true) {
+          var annotation = $__5.value;
+          {
+            this._collectProvidersWithAnnotation(annotation, forcedProviders);
+          }
+        }
+      } catch ($__10) {
+        $__8 = true;
+        $__9 = $__10;
+      } finally {
+        try {
+          if (!$__7 && $__4.return != null) {
+            $__4.return();
+          }
+        } finally {
+          if ($__8) {
+            throw $__9;
+          }
+        }
+      }
+      return new Injector(modules, this, forcedProviders);
+    },
+    dump: function() {
+      var $__3 = this;
+      var serialized = {
+        id: this.id,
+        parent_id: this.parent ? this.parent.id : null,
+        providers: {}
       };
-    }));
-    return serialized;
-  }
-}, {});
-;
+      Object.keys(this.providers).forEach(function(token) {
+        serialized.providers[token] = {
+          name: token,
+          dependencies: $__3.providers[token].params
+        };
+      });
+      return serialized;
+    }
+  }, {});
+}();
+Object.defineProperties(module.exports, {
+  Injector: {
+    get: function() {
+      return Injector;
+    },
+    enumerable: true
+  },
+  __esModule: {value: true}
+});

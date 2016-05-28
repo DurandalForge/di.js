@@ -1,22 +1,4 @@
 "use strict";
-Object.defineProperties(exports, {
-  isUpperCase: {get: function() {
-      return isUpperCase;
-    }},
-  isClass: {get: function() {
-      return isClass;
-    }},
-  isFunction: {get: function() {
-      return isFunction;
-    }},
-  isObject: {get: function() {
-      return isObject;
-    }},
-  toString: {get: function() {
-      return toString;
-    }},
-  __esModule: {value: true}
-});
 function isUpperCase(char) {
   return char.toUpperCase() === char;
 }
@@ -30,7 +12,7 @@ function isFunction(value) {
   return typeof value === 'function';
 }
 function isObject(value) {
-  return typeof value === 'object';
+  return (typeof value === 'undefined' ? 'undefined' : $traceurRuntime.typeof(value)) === 'object';
 }
 function toString(token) {
   if (typeof token === 'string') {
@@ -41,4 +23,36 @@ function toString(token) {
   }
   return token.toString();
 }
-;
+Object.defineProperties(module.exports, {
+  isUpperCase: {
+    get: function() {
+      return isUpperCase;
+    },
+    enumerable: true
+  },
+  isClass: {
+    get: function() {
+      return isClass;
+    },
+    enumerable: true
+  },
+  isFunction: {
+    get: function() {
+      return isFunction;
+    },
+    enumerable: true
+  },
+  isObject: {
+    get: function() {
+      return isObject;
+    },
+    enumerable: true
+  },
+  toString: {
+    get: function() {
+      return toString;
+    },
+    enumerable: true
+  },
+  __esModule: {value: true}
+});

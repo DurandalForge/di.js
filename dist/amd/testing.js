@@ -1,20 +1,20 @@
-define(['./injector', './annotations', './util', './providers'], function($__0,$__2,$__4,$__6) {
+define(["./injector", "./annotations", "./util", "./providers"], function($__2, $__4, $__6, $__8) {
   "use strict";
-  if (!$__0 || !$__0.__esModule)
-    $__0 = {default: $__0};
   if (!$__2 || !$__2.__esModule)
     $__2 = {default: $__2};
   if (!$__4 || !$__4.__esModule)
     $__4 = {default: $__4};
   if (!$__6 || !$__6.__esModule)
     $__6 = {default: $__6};
-  var Injector = $__0.Injector;
-  var $__3 = $__2,
-      Inject = $__3.Inject,
-      annotate = $__3.annotate,
-      readAnnotations = $__3.readAnnotations;
-  var isFunction = $__4.isFunction;
-  var createProviderFromFnOrClass = $__6.createProviderFromFnOrClass;
+  if (!$__8 || !$__8.__esModule)
+    $__8 = {default: $__8};
+  var Injector = $__2.Injector;
+  var $__5 = $__4,
+      Inject = $__5.Inject,
+      annotate = $__5.annotate,
+      readAnnotations = $__5.readAnnotations;
+  var isFunction = $__6.isFunction;
+  var createProviderFromFnOrClass = $__8.createProviderFromFnOrClass;
   var currentSpec = null;
   beforeEach(function() {
     currentSpec = this;
@@ -53,8 +53,8 @@ define(['./injector', './annotations', './util', './providers'], function($__0,$
   }
   function inject() {
     for (var params = [],
-        $__8 = 0; $__8 < arguments.length; $__8++)
-      params[$__8] = arguments[$__8];
+        $__1 = 0; $__1 < arguments.length; $__1++)
+      params[$__1] = arguments[$__1];
     var behavior = params.pop();
     annotate(behavior, new (Function.prototype.bind.apply(Inject, $traceurRuntime.spread([null], params)))());
     var run = function() {
@@ -88,7 +88,6 @@ define(['./injector', './annotations', './util', './providers'], function($__0,$
     };
     return isRunning() ? run() : run;
   }
-  ;
   return {
     get use() {
       return use;

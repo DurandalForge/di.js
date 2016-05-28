@@ -1,12 +1,14 @@
 "use strict";
-Object.defineProperties(exports, {
-  getUniqueId: {get: function() {
-      return getUniqueId;
-    }},
-  __esModule: {value: true}
-});
 var globalCounter = 0;
 function getUniqueId() {
   return ++globalCounter;
 }
-;
+Object.defineProperties(module.exports, {
+  getUniqueId: {
+    get: function() {
+      return getUniqueId;
+    },
+    enumerable: true
+  },
+  __esModule: {value: true}
+});
